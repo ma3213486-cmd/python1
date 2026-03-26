@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI 智能計算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto+Sans+TC', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+        .bmi-indicator {
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(to right, #3b82f6, #10b981, #f59e0b, #ef4444);
+            position: relative;
+        }
+        .marker {
+            width: 4px;
+            height: 20px;
+            background: #1f2937;
+            position: absolute;
+            top: -4px;
+            transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <div class="card max-w-md w-full p-8 rounded-3xl shadow-2xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">BMI 智能計算器</h1>
+        
+        <div class="space-y-6">
+            <!-- 身高輸入 -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">您的身高 (cm)</label>
+                <input type="number" id="height" placeholder="例如: 175" 
+                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+            </div>
+
+            <!-- 體重輸入 -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">您的體重 (kg)</label>
+                <input type="number" id="weight" placeholder="例如: 70" 
+                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+            </div>
+
+            <!-- 計算按鈕 -->
+            <button onclick="calculateBMI()" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transform active:scale-95 transition">
+                立即計算
+            </button>
+
+            <!-- 結果顯示區 -->
+            <div id="result-container" class="hidden space-y-4 pt-4 border-t border-gray-100">
+                <div class="text-center">
+                    <p class="text-gray-500 text-sm">您的 BMI 數值為</p>
+                    <h2 id="bmi-value" class="text-5xl font-extrabold text-blue-600 my-2">--</h2>
+                    <p id="bmi-status" class="text-xl font-bold px-4 py-1 rounded-full inline-block">--</p>
+                </div>
+
+                <!-- 指標圖 -->
+                <div class="mt-4">
+                    <div class="bmi-indicator">
+                        <div id="marker" class="marker" style="left: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-gray-400 mt-2">
+                        <span>過輕</span>
+                        <span>正常</span>
+                        <span>過重</span>
+                        <span>肥胖</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-600">
+                    <p id="advice" class="leading-relaxed"></p>
+                    <p id="ideal-weight" class="mt-2 font-medium text-blue-800"></p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center text-xs text-gray-400">
+            * 本計算器僅供參考，診斷請諮詢專業醫療人員。
+        </footer>
+    </div>
+
+    <script>
+        function calculateBMI() {
+            const h = document.getElementById('height').value;
+            const w = document.getElementById('weight').value;
+            const container = document.getElementById('result-container');
+
+            if (!h || !w || h <= 0 || w <= 0) {
+                alert('請輸入有效的身高與體重數值！');
+                return;
+            }
+
+            const heightInMeters = h / 100;
+            const bmi = (w / (heightInMeters * heightInMeters)).toFixed(1);
+            
+            // 顯示結果面板
+            container.classList.remove('hidden');
+            document.getElementById('bmi-value').innerText = bmi;
+
+            let status = "";
+            let colorClass = "";
+            let advice = "";
+            let markerPos = 0;
+
+            // 根據台灣衛生福利部標準
+            if (bmi < 18.5) {
+                status = "體重過輕";
+                colorClass = "text-blue-500 bg-blue-50";
+                advice = "體重較輕，建議適量增加營養攝取並搭配適度運動。";
+                markerPos = (bmi / 18.5) * 20; // 0-25% 區間
+            } else if (bmi >= 18.5 && bmi < 24) {
+                status = "健康體位";
+                colorClass = "text-green-600 bg-green-50";
+                advice = "恭喜！您的體重維持在理想範圍內，請繼續保持健康的飲食與運動習慣。";
+                markerPos = 25 + ((bmi - 18.5) / 5.5) * 25; // 25-50% 區間
+            } else if (bmi >= 24 && bmi < 27) {
+                status = "體重過重";
+                colorClass = "text-yellow-600 bg-yellow-50";
+                advice = "您的體重已超出正常範疇，建議開始調整飲食內容並規律運動。";
+                markerPos = 50 + ((bmi - 24) / 3) * 25; // 50-75% 區間
+            } else {
+                status = "肥胖";
+                colorClass = "text-red-600 bg-red-50";
+                advice = "體重對健康已造成較大負擔，建議諮詢營養師或專業醫師進行健康管理。";
+                markerPos = 75 + ((bmi - 27) / 13) * 25; // 75-100% 區間
+                if (markerPos > 98) markerPos = 98;
+            }
+
+            // 更新介面
+            const statusEl = document.getElementById('bmi-status');
+            statusEl.innerText = status;
+            statusEl.className = `text-xl font-bold px-4 py-1 rounded-full inline-block ${colorClass}`;
+            document.getElementById('advice').innerText = advice;
+            document.getElementById('marker').style.left = `${markerPos}%`;
+
+            // 計算理想體重範圍
+            const minWeight = (18.5 * heightInMeters * heightInMeters).toFixed(1);
+            const maxWeight = (24 * heightInMeters * heightInMeters).toFixed(1);
+            document.getElementById('ideal-weight').innerText = `您的理想體重區間為：${minWeight} - ${maxWeight} kg`;
+
+            // 平滑滾動至結果
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // 監聽 Enter 鍵
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                calculateBMI();
+            }
+        });
+    </script>
+</body>
+</html>
